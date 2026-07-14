@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance Management System · Al-Kawthar University</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root{
+  --navy:#0F172A;
+  --navy-2:#152238;
+  --navy-3:#1C2B45;
+  --royal:#2563EB;
+  --royal-2:#3B82F6;
+  --emerald:#10B981;
+  --emerald-2:#34D399;
+  --white:#FFFFFF;
+  --bg:#F1F5F9;
+  --bg-card:#FFFFFF;
+  --border:#E2E8F0;
+  --muted:#64748B;
+  --muted-2:#94A3B8;
+  --danger:#EF4444;
+  --danger-bg:#FEF2F2;
+  --warning:#F59E0B;
+  --success-bg:#ECFDF5;
+  --font-display:'Sora',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --radius-sm:10px;
+  --radius-md:16px;
+  --radius-lg:24px;
+  --shadow-sm:0 1px 2px rgba(15,23,42,0.06);
+  --shadow-md:0 8px 24px -6px rgba(15,23,42,0.12);
+  --shadow-lg:0 24px 48px -12px rgba(15,23,42,0.22);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--font-body);
+  background:var(--bg);
+  color:var(--navy);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+h1,h2,h3,h4,.display{font-family:var(--font-display);letter-spacing:-0.02em;}
+.mono{font-family:var(--font-mono);}
+button{font-family:inherit;cursor:pointer;border:none;outline:none;background:none;}
+input,select{font-family:inherit;outline:none;}
+a{color:inherit;text-decoration:none;}
+::selection{background:var(--emerald);color:white;}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.001ms !important;animation-iteration-count:1 !important;transition-duration:0.001ms !important;}
+}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:10px;}
+::-webkit-scrollbar-thumb:hover{background:#94A3B8;}
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+.hidden{display:none !important;}
+.container{max-width:1200px;margin:0 auto;padding:0 32px;}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px 26px;border-radius:12px;font-weight:600;font-size:14.5px;
+  transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+  white-space:nowrap;
+}
+.btn:active{transform:scale(0.97);}
+.btn-primary{
+  background:linear-gradient(135deg,var(--royal),#1D4ED8);
+  color:white;box-shadow:0 6px 18px -4px rgba(37,99,235,0.55);
+}
+.btn-primary:hover{box-shadow:0 10px 26px -4px rgba(37,99,235,0.65);transform:translateY(-1px);}
+.btn-emerald{
+  background:linear-gradient(135deg,var(--emerald),#059669);
+  color:white;box-shadow:0 6px 18px -4px rgba(16,185,129,0.5);
+}
+.btn-emerald:hover{box-shadow:0 10px 26px -4px rgba(16,185,129,0.6);transform:translateY(-1px);}
+.btn-ghost{
+  background:rgba(255,255,255,0.08);
+  color:white;border:1px solid rgba(255,255,255,0.25);
+  backdrop-filter:blur(8px);
+}
+.btn-ghost:hover{background:rgba(255,255,255,0.16);}
+.btn-outline{
+  background:transparent;border:1.5px solid var(--border);color:var(--navy);
+}
+.btn-outline:hover{border-color:var(--royal);color:var(--royal);background:#EFF6FF;}
+.btn-danger{
+  background:linear-gradient(135deg,#F87171,var(--danger));
+  color:white;box-shadow:0 6px 18px -4px rgba(239,68,68,0.45);
+}
+.btn-danger:hover{transform:translateY(-1px);}
+.btn-block{width:100%;}
+.btn-sm{padding:9px 16px;font-size:13px;border-radius:9px;}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none !important;}
+
+.icon{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+
+/* ============================================================
+   LOADER
+   ============================================================ */
+#loader{
+  position:fixed;inset:0;background:var(--navy);z-index:9999;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;
+  transition:opacity .5s ease, visibility .5s ease;
+}
+#loader.gone{opacity:0;visibility:hidden;pointer-events:none;}
+.loader-ring{
+  width:64px;height:64px;border-radius:50%;
+  border:4px solid rgba(255,255,255,0.12);
+  border-top-color:var(--emerald);
+  animation:spin 0.9s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loader-text{color:rgba(255,255,255,0.65);font-family:var(--font-mono);font-size:13px;letter-spacing:0.08em;text-transform:uppercase;}
+
+/* ============================================================
+   TOAST / ALERTS
+   ============================================================ */
+#toast-stack{
+  position:fixed;top:20px;right:20px;z-index:5000;
+  display:flex;flex-direction:column;gap:10px;max-width:360px;
+}
+.toast{
+  display:flex;align-items:flex-start;gap:12px;
+  background:var(--white);border-radius:14px;padding:14px 16px;
+  box-shadow:var(--shadow-lg);border-left:4px solid var(--emerald);
+  animation:toastIn .35s cubic-bezier(.2,.9,.3,1.2);
+  font-size:14px;
+}
+.toast.error{border-left-color:var(--danger);}
+.toast.info{border-left-color:var(--royal);}
+@keyframes toastIn{from{transform:translateX(30px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+.toast-icon{width:20px;height:20px;flex-shrink:0;margin-top:1px;}
+.toast .icon{stroke:var(--emerald);}
+.toast.error .icon{stroke:var(--danger);}
+.toast.info .icon{stroke:var(--royal);}
+.toast-title{font-weight:700;margin-bottom:2px;}
+.toast-msg{color:var(--muted);font-size:13px;}
+
+/* ============================================================
+   LANDING PAGE
+   ============================================================ */
+.landing{
+  min-height:100vh;position:relative;overflow:hidden;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(37,99,235,0.35), transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(16,185,129,0.28), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(37,99,235,0.2), transparent 50%),
+    linear-gradient(180deg, var(--navy) 0%, #0B1220 100%);
+  color:white;
+}
+.landing::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse at 50% 0%, black 40%, transparent 75%);
+  pointer-events:none;
+}
+.nav{
+  position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;
+  padding:26px 32px;max-width:1200px;margin:0 auto;
+}
+.brand{display:flex;align-items:center;gap:12px;font-family:var(--font-display);font-weight:700;font-size:18px;}
+.brand-mark{
+  width:38px;height:38px;border-radius:11px;
+  background:linear-gradient(135deg,var(--royal),var(--emerald));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 14px rgba(37,99,235,0.4);
+}
+.brand-mark svg{width:20px;height:20px;stroke:white;}
+.brand-sub{font-size:11px;color:rgba(255,255,255,0.5);font-weight:500;letter-spacing:0.02em;margin-top:1px;}
+
+.hero{
+  position:relative;z-index:2;max-width:1200px;margin:0 auto;
+  padding:70px 32px 90px;
+  display:grid;grid-template-columns:1.15fr 0.85fr;gap:56px;align-items:center;
+}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(16,185,129,0.14);border:1px solid rgba(16,185,129,0.35);
+  color:var(--emerald-2);padding:7px 14px;border-radius:100px;
+  font-size:12.5px;font-weight:600;letter-spacing:0.03em;margin-bottom:24px;
+  animation:fadeUp .7s ease both;
+}
+.pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--emerald);animation:pulseDot 1.8s ease-in-out infinite;}
+@keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,0.6);}50%{box-shadow:0 0 0 6px rgba(16,185,129,0);}}
+
+.hero h1{
+  font-size:52px;line-height:1.05;font-weight:800;margin-bottom:20px;
+  animation:fadeUp .7s ease .05s both;
+}
+.hero h1 span{
+  background:linear-gradient(135deg,var(--emerald-2),var(--royal-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero p{
+  font-size:17px;line-height:1.65;color:rgba(255,255,255,0.62);max-width:520px;margin-bottom:34px;
+  animation:fadeUp .7s ease .1s both;
+}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;animation:fadeUp .7s ease .15s both;margin-bottom:40px;}
+.hero-meta{display:flex;gap:28px;flex-wrap:wrap;animation:fadeUp .7s ease .2s both;}
+.hero-meta div{display:flex;flex-direction:column;gap:2px;}
+.hero-meta .num{font-family:var(--font-display);font-size:22px;font-weight:700;color:white;}
+.hero-meta .lbl{font-size:12px;color:rgba(255,255,255,0.45);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+/* Signature element: live attendance ring panel */
+.hero-panel{
+  position:relative;animation:fadeUp .8s ease .2s both;
+}
+.ring-card{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:var(--radius-lg);
+  padding:30px;backdrop-filter:blur(20px);
+  box-shadow:0 30px 60px -20px rgba(0,0,0,0.5);
+  position:relative;
+}
+.ring-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;}
+.ring-card-top .t1{font-size:12px;color:rgba(255,255,255,0.5);letter-spacing:0.04em;text-transform:uppercase;font-weight:600;}
+.ring-card-top .t2{font-size:12px;color:var(--emerald-2);font-family:var(--font-mono);}
+.ring-wrap{display:flex;align-items:center;justify-content:center;position:relative;margin:10px 0 22px;}
+.ring-center{position:absolute;text-align:center;}
+.ring-center .pct{font-family:var(--font-display);font-size:38px;font-weight:800;color:white;}
+.ring-center .lbl{font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;}
+.subj-rows{display:flex;flex-direction:column;gap:12px;}
+.subj-row{display:flex;align-items:center;gap:12px;}
+.subj-row .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.subj-row .name{font-size:13px;color:rgba(255,255,255,0.7);width:78px;flex-shrink:0;}
+.subj-row .bar{flex:1;height:6px;background:rgba(255,255,255,0.1);border-radius:6px;overflow:hidden;}
+.subj-row .bar-fill{height:100%;border-radius:6px;animation:fillBar 1.4s cubic-bezier(.2,.8,.3,1) both;}
+@keyframes fillBar{from{width:0;}}
+.subj-row .val{font-family:var(--font-mono);font-size:12.5px;color:rgba(255,255,255,0.55);width:36px;text-align:right;}
+
+.feature-strip{
+  position:relative;z-index:2;border-top:1px solid rgba(255,255,255,0.08);
+  padding:36px 0 50px;
+}
+.feature-grid{
+  max-width:1200px;margin:0 auto;padding:0 32px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:20px;
+}
+.feature-item{display:flex;gap:14px;align-items:flex-start;}
+.feature-item .fi{
+  width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.07);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(255,255,255,0.1);
+}
+.feature-item .fi svg{width:18px;height:18px;stroke:var(--emerald-2);}
+.feature-item h4{font-size:14.5px;font-weight:600;color:white;margin-bottom:3px;}
+.feature-item p{font-size:12.5px;color:rgba(255,255,255,0.45);line-height:1.5;}
+
+@media(max-width:920px){
+  .hero{grid-template-columns:1fr;padding-top:40px;}
+  .hero h1{font-size:38px;}
+  .feature-grid{grid-template-columns:repeat(2,1fr);}
+}
+
+/* ============================================================
+   APP SHELL (post-landing)
+   ============================================================ */
+#app{display:none;min-height:100vh;}
+#app.active{display:block;}
+#landing.hidden-landing{display:none;}
+
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(255,255,255,0.85);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 28px;
+}
+.topbar-left{display:flex;align-items:center;gap:14px;}
+.topbar-brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--navy);}
+.topbar-brand .brand-mark{width:32px;height:32px;border-radius:9px;}
+.topbar-brand .brand-mark svg{width:16px;height:16px;}
+.crumbs{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.crumbs b{color:var(--navy);font-weight:600;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.pill-role{
+  display:flex;align-items:center;gap:8px;background:var(--bg);
+  padding:7px 12px 7px 8px;border-radius:100px;font-size:13px;font-weight:600;color:var(--navy);
+  border:1px solid var(--border);
+}
+.pill-role .avatar{
+  width:22px;height:22px;border-radius:50%;
+  background:linear-gradient(135deg,var(--royal),var(--emerald));
+  display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:700;
+}
+
+.view{display:none;padding:36px 28px 60px;max-width:1200px;margin:0 auto;animation:viewIn .4s ease both;}
+.view.active{display:block;}
+@keyframes viewIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+.page-head{margin-bottom:30px;}
+.page-head h1{font-size:28px;font-weight:800;margin-bottom:6px;}
+.page-head p{color:var(--muted);font-size:14.5px;}
+.back-link{
+  display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:13.5px;font-weight:600;
+  margin-bottom:16px;transition:color .15s;
+}
+.back-link:hover{color:var(--royal);}
+.back-link .icon{width:15px;height:15px;}
+
+/* ============================================================
+   MAIN MENU (choice cards)
+   ============================================================ */
+.choice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:8px;}
+.choice-card{
+  position:relative;background:var(--bg-card);border-radius:var(--radius-lg);
+  padding:32px 26px;border:1px solid var(--border);
+  box-shadow:var(--shadow-sm);
+  transition:transform .25s cubic-bezier(.2,.8,.3,1), box-shadow .25s ease, border-color .25s ease;
+  overflow:hidden;text-align:left;
+}
+.choice-card::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--card-accent, linear-gradient(90deg,var(--royal),var(--emerald)));
+  transform:scaleX(0);transform-origin:left;transition:transform .3s ease;
+}
+.choice-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg);border-color:transparent;}
+.choice-card:hover::after{transform:scaleX(1);}
+.choice-ic{
+  width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  margin-bottom:18px;background:var(--ic-bg,#EFF6FF);
+}
+.choice-ic svg{width:24px;height:24px;stroke:var(--ic-color,var(--royal));}
+.choice-card h3{font-size:18px;font-weight:700;margin-bottom:8px;}
+.choice-card p{font-size:13.5px;color:var(--muted);line-height:1.55;margin-bottom:18px;}
+.choice-card .go{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:var(--royal);}
+.choice-card .go .icon{width:15px;height:15px;transition:transform .2s;}
+.choice-card:hover .go .icon{transform:translateX(3px);}
+
+@media(max-width:880px){.choice-grid{grid-template-columns:1fr;}}
+
+/* ============================================================
+   AUTH CARDS (signup/login menus + forms)
+   ============================================================ */
+.auth-wrap{max-width:920px;margin:0 auto;}
+.auth-split{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+.mini-card{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:28px;box-shadow:var(--shadow-sm);transition:box-shadow .2s, transform .2s;
+}
+.mini-card:hover{box-shadow:var(--shadow-md);transform:translateY(-3px);}
+.mini-card .mi{
+  width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;
+}
+.mini-card .mi svg{width:21px;height:21px;}
+.mini-card h3{font-size:16.5px;font-weight:700;margin-bottom:6px;}
+.mini-card p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+
+.form-card{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:34px;box-shadow:var(--shadow-sm);max-width:460px;margin:0 auto;
+}
+.form-card h2{font-size:20px;font-weight:800;margin-bottom:6px;}
+.form-card .sub{color:var(--muted);font-size:13.5px;margin-bottom:24px;}
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:7px;color:var(--navy);}
+.field .hint{font-size:11.5px;color:var(--muted-2);margin-top:5px;}
+.input-wrap{position:relative;}
+.input-wrap .icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:17px;height:17px;stroke:var(--muted-2);}
+.input-wrap input, .input-wrap select{
+  width:100%;padding:12px 14px 12px 42px;border:1.5px solid var(--border);border-radius:11px;
+  font-size:14px;transition:border-color .15s, box-shadow .15s;background:var(--bg);
+}
+.input-wrap select{padding-left:42px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
+.input-wrap input:focus, .input-wrap select:focus{
+  border-color:var(--royal);background:white;box-shadow:0 0 0 4px rgba(37,99,235,0.12);
+}
+.field.err .input-wrap input{border-color:var(--danger);}
+.field-error{color:var(--danger);font-size:12px;margin-top:6px;display:none;font-weight:600;}
+.field.err .field-error{display:block;}
+.form-actions{display:flex;gap:12px;margin-top:24px;}
+.form-foot{text-align:center;margin-top:18px;font-size:13px;color:var(--muted);}
+.form-foot button{color:var(--royal);font-weight:700;}
+
+/* ============================================================
+   DASHBOARD SHELL (sidebar layout)
+   ============================================================ */
+.dash{display:grid;grid-template-columns:250px 1fr;gap:0;min-height:calc(100vh - 61px);}
+.sidebar{
+  background:linear-gradient(180deg,var(--navy),#0B1526);
+  padding:24px 16px;display:flex;flex-direction:column;gap:4px;
+}
+.sidebar-userbox{
+  display:flex;align-items:center;gap:12px;padding:14px 12px;margin-bottom:18px;
+  background:rgba(255,255,255,0.06);border-radius:14px;border:1px solid rgba(255,255,255,0.08);
+}
+.sidebar-userbox .avatar{
+  width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--royal),var(--emerald));
+  display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0;
+}
+.sidebar-userbox .u-name{color:white;font-size:13.5px;font-weight:700;}
+.sidebar-userbox .u-role{color:rgba(255,255,255,0.45);font-size:11px;text-transform:uppercase;letter-spacing:0.04em;}
+.sidebar-label{font-size:10.5px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;padding:14px 12px 8px;}
+.side-link{
+  display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;
+  color:rgba(255,255,255,0.68);font-size:13.5px;font-weight:600;transition:background .15s, color .15s;text-align:left;width:100%;
+}
+.side-link .icon{width:17px;height:17px;stroke-width:2;flex-shrink:0;}
+.side-link:hover{background:rgba(255,255,255,0.07);color:white;}
+.side-link.active{background:linear-gradient(135deg,rgba(37,99,235,0.35),rgba(16,185,129,0.25));color:white;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.12);}
+.side-link.logout{margin-top:auto;color:#FCA5A5;}
+.side-link.logout:hover{background:rgba(239,68,68,0.14);color:#FEE2E2;}
+.sidebar-spacer{flex:1;}
+
+.dash-main{padding:30px 32px 60px;background:var(--bg);}
+.panel{display:none;animation:viewIn .35s ease both;}
+.panel.active{display:block;}
+
+/* stat cards */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:28px;}
+.stat-card{
+  background:var(--bg-card);border-radius:var(--radius-md);padding:22px;border:1px solid var(--border);
+  box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
+}
+.stat-card .sc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.stat-card .sc-ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;}
+.stat-card .sc-ic svg{width:18px;height:18px;}
+.stat-card .sc-trend{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:100px;}
+.stat-card .val{font-family:var(--font-display);font-size:28px;font-weight:800;margin-bottom:3px;}
+.stat-card .lbl{font-size:12.5px;color:var(--muted);}
+
+@media(max-width:1000px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+
+.card{
+  background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border);
+  box-shadow:var(--shadow-sm);padding:26px;margin-bottom:22px;
+}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.card-head h3{font-size:16.5px;font-weight:700;}
+.card-head p{font-size:13px;color:var(--muted);margin-top:2px;}
+
+/* forms inline within cards */
+.form-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:end;}
+.form-row.two{grid-template-columns:repeat(2,1fr);}
+@media(max-width:760px){.form-row,.form-row.two{grid-template-columns:1fr;}}
+
+/* tables */
+.table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+thead th{
+  background:var(--bg);text-align:left;padding:12px 16px;font-weight:700;font-size:12px;
+  text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+tbody td{padding:13px 16px;border-bottom:1px solid var(--border);color:var(--navy);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr{transition:background .15s;}
+tbody tr:hover{background:#F8FAFC;}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:100px;}
+.badge-present{background:var(--success-bg);color:var(--emerald);}
+.badge-absent{background:var(--danger-bg);color:var(--danger);}
+.badge-eligible{background:var(--success-bg);color:var(--emerald);}
+.badge-noteligible{background:var(--danger-bg);color:var(--danger);}
+.cell-btn{
+  width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;
+  background:var(--bg);border:1px solid var(--border);transition:all .15s;
+}
+.cell-btn:hover{background:var(--royal);border-color:var(--royal);}
+.cell-btn:hover svg{stroke:white;}
+.cell-btn svg{width:13px;height:13px;stroke:var(--muted);}
+.row-actions{display:flex;gap:6px;}
+
+.empty-state{
+  text-align:center;padding:50px 20px;color:var(--muted);
+}
+.empty-state svg{width:44px;height:44px;stroke:var(--muted-2);margin-bottom:14px;}
+.empty-state h4{font-size:15px;color:var(--navy);margin-bottom:4px;font-weight:700;}
+.empty-state p{font-size:13px;}
+
+/* progress bars */
+.pbar{height:9px;border-radius:100px;background:#E2E8F0;overflow:hidden;position:relative;}
+.pbar-fill{height:100%;border-radius:100px;transition:width 1s cubic-bezier(.2,.8,.3,1);}
+.pbar-fill.good{background:linear-gradient(90deg,var(--emerald),var(--emerald-2));}
+.pbar-fill.bad{background:linear-gradient(90deg,#F87171,var(--danger));}
+
+/* attendance grid (subject x day) */
+.attgrid{display:flex;flex-direction:column;gap:16px;}
+.attgrid-subject h4{font-size:13.5px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.daydots{display:grid;grid-template-columns:repeat(15,1fr);gap:5px;}
+@media(max-width:700px){.daydots{grid-template-columns:repeat(10,1fr);}}
+.daydot{
+  aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:9.5px;font-weight:700;color:white;position:relative;cursor:default;
+}
+.daydot.present{background:var(--emerald);}
+.daydot.absent{background:#E2E8F0;color:var(--muted-2);}
+.daydot:hover::after{
+  content:attr(data-tip);position:absolute;bottom:120%;left:50%;transform:translateX(-50%);
+  background:var(--navy);color:white;font-size:10.5px;padding:4px 8px;border-radius:6px;white-space:nowrap;z-index:10;
+}
+
+/* mark attendance list */
+.mark-list{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;padding-right:4px;}
+.mark-row{
+  display:flex;align-items:center;justify-content:space-between;padding:13px 16px;
+  background:var(--bg);border-radius:12px;border:1px solid var(--border);
+}
+.mark-row .mr-info{display:flex;align-items:center;gap:12px;}
+.mark-row .mr-av{
+  width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--royal-2),var(--royal));
+  display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;
+}
+.mark-row .mr-name{font-weight:700;font-size:13.5px;}
+.mark-row .mr-id{font-size:11.5px;color:var(--muted);font-family:var(--font-mono);}
+.toggle-group{display:flex;background:var(--border);border-radius:9px;padding:3px;gap:3px;}
+.toggle-opt{padding:6px 14px;border-radius:6px;font-size:12.5px;font-weight:700;color:var(--muted);transition:all .15s;}
+.toggle-opt.on-present.active{background:var(--emerald);color:white;}
+.toggle-opt.on-absent.active{background:var(--danger);color:white;}
+
+/* file viewer modal look */
+.filebox{
+  background:#0B1220;border-radius:14px;padding:20px 22px;font-family:var(--font-mono);
+  font-size:12.5px;color:#A7F3D0;line-height:1.7;overflow-x:auto;white-space:pre;max-height:420px;overflow-y:auto;
+}
+.filebox .ln{color:#475569;margin-right:10px;user-select:none;}
+.filebox-head{
+  display:flex;align-items:center;gap:8px;background:#1E293B;padding:10px 16px;border-radius:14px 14px 0 0;
+  margin-bottom:-2px;
+}
+.filebox-head .dot{width:10px;height:10px;border-radius:50%;}
+.filebox-wrap{border-radius:14px;overflow:hidden;}
+.filebox-wrap .filebox{border-radius:0 0 14px 14px;}
+
+/* modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(15,23,42,0.55);backdrop-filter:blur(4px);
+  z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;visibility:hidden;transition:opacity .25s, visibility .25s;
+}
+.modal-overlay.show{opacity:1;visibility:visible;}
+.modal-box{
+  background:var(--bg-card);border-radius:var(--radius-lg);max-width:640px;width:100%;
+  max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-lg);
+  transform:scale(0.94) translateY(10px);transition:transform .25s cubic-bezier(.2,.8,.3,1.1);
+}
+.modal-overlay.show .modal-box{transform:scale(1) translateY(0);}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:22px 26px;border-bottom:1px solid var(--border);}
+.modal-head h3{font-size:16.5px;font-weight:700;}
+.modal-close{width:32px;height:32px;border-radius:9px;background:var(--bg);display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{background:var(--danger-bg);}
+.modal-close svg{width:16px;height:16px;stroke:var(--muted);}
+.modal-close:hover svg{stroke:var(--danger);}
+.modal-body{padding:24px 26px 28px;}
+
+/* result banners */
+.result-banner{
+  border-radius:16px;padding:24px;display:flex;align-items:center;gap:18px;margin-top:6px;
+}
+.result-banner.ok{background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border:1px solid #A7F3D0;}
+.result-banner.no{background:linear-gradient(135deg,#FEF2F2,#FEE2E2);border:1px solid #FECACA;}
+.result-banner .rb-ic{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.result-banner.ok .rb-ic{background:var(--emerald);}
+.result-banner.no .rb-ic{background:var(--danger);}
+.result-banner .rb-ic svg{width:26px;height:26px;stroke:white;}
+.result-banner h4{font-size:16.5px;font-weight:800;margin-bottom:3px;}
+.result-banner.ok h4{color:#065F46;}
+.result-banner.no h4{color:#991B1B;}
+.result-banner p{font-size:13px;color:var(--muted);}
+
+.footnote{font-size:12px;color:var(--muted-2);margin-top:14px;text-align:center;}
+
+/* responsive dash */
+@media(max-width:880px){
+  .dash{grid-template-columns:1fr;}
+  .sidebar{
+    flex-direction:row;overflow-x:auto;padding:12px 16px;gap:8px;align-items:center;
+  }
+  .sidebar-userbox{display:none;}
+  .sidebar-label{display:none;}
+  .side-link{flex-shrink:0;padding:9px 14px;}
+  .side-link span{display:none;}
+  .side-link.logout{margin-top:0;}
+  .dash-main{padding:22px 16px 50px;}
+  .stat-grid{grid-template-columns:1fr 1fr;}
+  .form-row{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================ LOADER ============================================================ -->
+<div id="loader">
+  <div class="loader-ring"></div>
+  <div class="loader-text">Initializing System…</div>
+</div>
+
+<div id="toast-stack"></div>
+
+<!-- ============================================================ LANDING PAGE ============================================================ -->
+<div id="landing" class="landing">
+  <div class="nav">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </div>
+      <div>
+        AMS
+        <div class="brand-sub">Al-Kawthar University</div>
+      </div>
+    </div>
+    <button class="btn btn-ghost" onclick="goToMainMenu()">
+      Enter System
+      <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+
+  <div class="hero">
+    <div>
+      <div class="eyebrow"><span class="pulse-dot"></span> Department of Computer Science · C Language Project</div>
+      <h1>Attendance,<br>tracked <span>with precision.</span></h1>
+      <p>A menu-driven attendance record system rebuilt as a modern dashboard — three roles, one source of truth: students check their standing, teachers mark and manage records, and the exam department verifies eligibility before every paper.</p>
+      <div class="hero-actions">
+        <button class="btn btn-emerald" onclick="goToMainMenu()">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.3 5.3-3-3L3 17"/></svg>
+          Open Main Menu
+        </button>
+        <button class="btn btn-ghost" onclick="scrollToFeatures()">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          How it works
+        </button>
+      </div>
+      <div class="hero-meta">
+        <div><span class="num">3</span><span class="lbl">Subjects tracked</span></div>
+        <div><span class="num">30</span><span class="lbl">Days per cycle</span></div>
+        <div><span class="num">75%</span><span class="lbl">Eligibility threshold</span></div>
+        <div><span class="num">3</span><span class="lbl">User roles</span></div>
+      </div>
+    </div>
+
+    <div class="hero-panel">
+      <div class="ring-card">
+        <div class="ring-card-top">
+          <span class="t1">Live Snapshot</span>
+          <span class="t2" id="landing-clock">•</span>
+        </div>
+        <div class="ring-wrap">
+          <svg width="180" height="180" viewBox="0 0 180 180">
+            <circle cx="90" cy="90" r="76" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="14"/>
+            <circle cx="90" cy="90" r="76" fill="none" stroke="url(#ringGrad)" stroke-width="14" stroke-linecap="round"
+              stroke-dasharray="477.5" stroke-dashoffset="132" transform="rotate(-90 90 90)"/>
+            <defs>
+              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#34D399"/>
+                <stop offset="100%" stop-color="#2563EB"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="ring-center">
+            <div class="pct">72%</div>
+            <div class="lbl">Avg. Attendance</div>
+          </div>
+        </div>
+        <div class="subj-rows">
+          <div class="subj-row">
+            <span class="dot" style="background:#34D399"></span>
+            <span class="name">Subject 1</span>
+            <span class="bar"><span class="bar-fill" style="width:80%;background:#34D399"></span></span>
+            <span class="val">80%</span>
+          </div>
+          <div class="subj-row">
+            <span class="dot" style="background:#3B82F6"></span>
+            <span class="name">Subject 2</span>
+            <span class="bar"><span class="bar-fill" style="width:63%;background:#3B82F6"></span></span>
+            <span class="val">63%</span>
+          </div>
+          <div class="subj-row">
+            <span class="dot" style="background:#F59E0B"></span>
+            <span class="name">Subject 3</span>
+            <span class="bar"><span class="bar-fill" style="width:74%;background:#F59E0B"></span></span>
+            <span class="val">74%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="feature-strip" id="features">
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="fi"><svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div><h4>Student Portal</h4><p>Sign up, log in, and check attendance & percentage per subject.</p></div>
+      </div>
+      <div class="feature-item">
+        <div class="fi"><svg class="icon" viewBox="0 0 24 24"><path d="M2 3h20v14H2z"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></div>
+        <div><h4>Teacher Panel</h4><p>Add students, mark & update daily attendance, search records.</p></div>
+      </div>
+      <div class="feature-item">
+        <div class="fi"><svg class="icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg></div>
+        <div><h4>Exam Department</h4><p>Verify eligibility against the 75% attendance threshold instantly.</p></div>
+      </div>
+      <div class="feature-item">
+        <div class="fi"><svg class="icon" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg></div>
+        <div><h4>File-Backed Storage</h4><p>Mirrors the original C program's students.txt / attendance.dat model.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ APP SHELL ============================================================ -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-brand">
+        <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+        AMS
+      </div>
+      <div class="crumbs" id="crumbs">/ <b>Main Menu</b></div>
+    </div>
+    <div class="topbar-right" id="topbar-session"></div>
+  </div>
+
+  <!-- ===== VIEW: MAIN MENU ===== -->
+  <div class="view active" id="view-mainmenu">
+    <div class="page-head">
+      <h1>Attendance Management System</h1>
+      <p>Choose how you'd like to enter the system.</p>
+    </div>
+    <div class="choice-grid">
+      <button class="choice-card" onclick="showView('view-student-menu')" style="--card-accent:linear-gradient(90deg,#2563EB,#3B82F6);">
+        <div class="choice-ic" style="--ic-bg:#EFF6FF;--ic-color:#2563EB;"><svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <h3>1. Student</h3>
+        <p>Sign up or log in to view your attendance records and percentage per subject.</p>
+        <span class="go">Continue <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
+      </button>
+      <button class="choice-card" onclick="showView('view-teacher-menu')" style="--card-accent:linear-gradient(90deg,#10B981,#34D399);">
+        <div class="choice-ic" style="--ic-bg:#ECFDF5;--ic-color:#10B981;"><svg class="icon" viewBox="0 0 24 24"><path d="M2 3h20v14H2z"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></div>
+        <h3>2. Teacher</h3>
+        <p>Sign up or log in to manage students and mark, update, or delete attendance.</p>
+        <span class="go">Continue <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
+      </button>
+      <button class="choice-card" onclick="showView('view-exam-menu')" style="--card-accent:linear-gradient(90deg,#0F172A,#2563EB);">
+        <div class="choice-ic" style="--ic-bg:#EEF2FF;--ic-color:#4338CA;"><svg class="icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg></div>
+        <h3>3. Exam Department</h3>
+        <p>Sign up or log in to check student eligibility for upcoming examinations.</p>
+        <span class="go">Continue <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
+      </button>
+    </div>
+    <div class="footnote">4. Exit — leave the system and return to the landing page.</div>
+    <div style="text-align:center;margin-top:10px;">
+      <button class="btn btn-outline btn-sm" onclick="exitSystem()">
+        <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Exit System
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: STUDENT MENU (signup/login/back) ===== -->
+  <div class="view" id="view-student-menu">
+    <button class="back-link" onclick="showView('view-mainmenu')"><svg class="icon" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg> Back to Main Menu</button>
+    <div class="page-head"><h1>Student Menu</h1><p>Sign up for a new record, or log in to an existing one.</p></div>
+    <div class="auth-wrap">
+      <div class="auth-split">
+        <div class="mini-card">
+          <div class="mi" style="background:#EFF6FF;"><svg class="icon" viewBox="0 0 24 24" style="stroke:#2563EB"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h3>1. Signup</h3>
+          <p>Register a new student ID, name, and password to start tracking attendance.</p>
+          <button class="btn btn-primary btn-block" onclick="openModal('modal-student-signup')">Create account</button>
+        </div>
+        <div class="mini-card">
+          <div class="mi" style="background:#ECFDF5;"><svg class="icon" viewBox="0 0 24 24" style="stroke:#10B981"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <h3>2. Login</h3>
+          <p>Access your dashboard using your Student ID and password.</p>
+          <button class="btn btn-emerald btn-block" onclick="openModal('modal-student-login')">Log in</button>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:22px;">
+        <button class="btn btn-outline btn-sm" onclick="showView('view-mainmenu')">3. Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: TEACHER MENU ===== -->
+  <div class="view" id="view-teacher-menu">
+    <button class="back-link" onclick="showView('view-mainmenu')"><svg class="icon" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg> Back to Main Menu</button>
+    <div class="page-head"><h1>Teacher Menu</h1><p>Sign up for a new staff account, or log in to manage attendance.</p></div>
+    <div class="auth-wrap">
+      <div class="auth-split">
+        <div class="mini-card">
+          <div class="mi" style="background:#EFF6FF;"><svg class="icon" viewBox="0 0 24 24" style="stroke:#2563EB"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h3>1. Signup</h3>
+          <p>Register a username and password for the teacher dashboard.</p>
+          <button class="btn btn-primary btn-block" onclick="openModal('modal-teacher-signup')">Create account</button>
+        </div>
+        <div class="mini-card">
+          <div class="mi" style="background:#ECFDF5;"><svg class="icon" viewBox="0 0 24 24" style="stroke:#10B981"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <h3>2. Login</h3>
+          <p>Access the Teacher Panel using your username and password.</p>
+          <button class="btn btn-emerald btn-block" onclick="openModal('modal-teacher-login')">Log in</button>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:22px;">
+        <button class="btn btn-outline btn-sm" onclick="showView('view-mainmenu')">3. Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: EXAM MENU ===== -->
+  <div class="view" id="view-exam-menu">
+    <button class="back-link" onclick="showView('view-mainmenu')"><svg class="icon" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg> Back to Main Menu</button>
+    <div class="page-head"><h1>Exam Department</h1><p>Sign up for a new department account, or log in to check eligibility.</p></div>
+    <div class="auth-wrap">
+      <div class="auth-split">
+        <div class="mini-card">
+          <div class="mi" style="background:#EFF6FF;"><svg class="icon" viewBox="0 0 24 24" style="stroke:#2563EB"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h3>1. Signup</h3>
+          <p>Register a username and password for the exam department.</p>
+          <button class="btn btn-primary btn-block" onclick="openModal('modal-exam-signup')">Create account</button>
+        </div>
+        <div class="mini-card">
+          <div class="mi" style="background:#ECFDF5;"><svg class="icon" viewBox="0 0 24 24" style="stroke:#10B981"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <h3>2. Login</h3>
+          <p>Access the Exam Panel using your username and password.</p>
+          <button class="btn btn-emerald btn-block" onclick="openModal('modal-exam-login')">Log in</button>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:22px;">
+        <button class="btn btn-outline btn-sm" onclick="showView('view-mainmenu')">3. Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: STUDENT DASHBOARD ===== -->
+  <div class="view" id="view-student-dash">
+    <div class="dash">
+      <div class="sidebar">
+        <div class="sidebar-userbox">
+          <div class="avatar" id="stu-avatar">S</div>
+          <div><div class="u-name" id="stu-name-side">—</div><div class="u-role">Student</div></div>
+        </div>
+        <div class="sidebar-label">Student Panel</div>
+        <button class="side-link active" data-panel="stu-panel-view" onclick="switchDashPanel(this,'stu-panel-view')"><svg class="icon" viewBox="0 0 24 24"><path d="M2 3h20v14H2z"/><path d="M8 21h8"/><path d="M12 17v4"/></svg><span>1. View Attendance</span></button>
+        <button class="side-link" data-panel="stu-panel-percent" onclick="switchDashPanel(this,'stu-panel-percent')"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg><span>2. View Attendance %</span></button>
+        <div class="sidebar-spacer"></div>
+        <button class="side-link logout" onclick="logout('student')"><svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span>3. Logout</span></button>
+      </div>
+      <div class="dash-main">
+        <!-- Panel 1: view attendance -->
+        <div class="panel active" id="stu-panel-view">
+          <div class="page-head"><h1>My Attendance</h1><p>Daily record across all subjects for the current 30-day cycle.</p></div>
+          <div class="stat-grid" id="stu-stat-grid"></div>
+          <div class="card">
+            <div class="card-head"><div><h3>Attendance Grid</h3><p>Green marks a present day, gray marks absent.</p></div></div>
+            <div class="attgrid" id="stu-attgrid"></div>
+          </div>
+        </div>
+        <!-- Panel 2: percentage -->
+        <div class="panel" id="stu-panel-percent">
+          <div class="page-head"><h1>Attendance Percentage</h1><p>Overall standing across Subject 1, 2, and 3 combined.</p></div>
+          <div class="card" style="max-width:560px;">
+            <div class="card-head"><div><h3 id="stu-pct-title">—</h3><p>Present days ÷ total days × 100</p></div></div>
+            <div class="pbar" style="height:14px;"><div class="pbar-fill good" id="stu-pct-bar" style="width:0%"></div></div>
+            <div class="footnote" style="margin-top:16px;" id="stu-pct-detail"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: TEACHER DASHBOARD ===== -->
+  <div class="view" id="view-teacher-dash">
+    <div class="dash">
+      <div class="sidebar">
+        <div class="sidebar-userbox">
+          <div class="avatar" id="tea-avatar">T</div>
+          <div><div class="u-name" id="tea-name-side">—</div><div class="u-role">Teacher</div></div>
+        </div>
+        <div class="sidebar-label">Teacher Panel</div>
+        <button class="side-link active" data-panel="tea-panel-add" onclick="switchDashPanel(this,'tea-panel-add')"><svg class="icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg><span>1. Add Student</span></button>
+        <button class="side-link" data-panel="tea-panel-mark" onclick="switchDashPanel(this,'tea-panel-mark')"><svg class="icon" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span>2. Mark Attendance</span></button>
+        <button class="side-link" data-panel="tea-panel-view" onclick="switchDashPanel(this,'tea-panel-view')"><svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>3. View Attendance</span></button>
+        <button class="side-link" data-panel="tea-panel-update" onclick="switchDashPanel(this,'tea-panel-update')"><svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span>4. Update Attendance</span></button>
+        <button class="side-link" data-panel="tea-panel-delete" onclick="switchDashPanel(this,'tea-panel-delete')"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span>5. Delete Attendance</span></button>
+        <button class="side-link" data-panel="tea-panel-search" onclick="switchDashPanel(this,'tea-panel-search')"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg><span>6. Search Student</span></button>
+        <button class="side-link" data-panel="tea-panel-files" onclick="switchDashPanel(this,'tea-panel-files')"><svg class="icon" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg><span>7–9. View Files</span></button>
+        <div class="sidebar-spacer"></div>
+        <button class="side-link logout" onclick="logout('teacher')"><svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span>10. Logout</span></button>
+      </div>
+      <div class="dash-main">
+        <div class="stat-grid" id="tea-stat-grid"></div>
+
+        <!-- Panel: Add Student -->
+        <div class="panel active" id="tea-panel-add">
+          <div class="card" style="max-width:520px;">
+            <div class="card-head"><div><h3>1. Add Student</h3><p>Registers a new student record (same as Student Signup).</p></div></div>
+            <form onsubmit="return teacherAddStudent(event)">
+              <div class="field"><label>Student ID</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10"/><path d="M7 12h6"/></svg><input type="number" required id="ta-id" placeholder="e.g. 105"></div></div>
+              <div class="field"><label>Name</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><input type="text" required id="ta-name" placeholder="Full name"></div></div>
+              <div class="field"><label>Password</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="text" required id="ta-pass" placeholder="Password"></div></div>
+              <button class="btn btn-primary btn-block" type="submit">Add Student</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Panel: Mark Attendance -->
+        <div class="panel" id="tea-panel-mark">
+          <div class="card">
+            <div class="card-head"><div><h3>2. Mark Attendance</h3><p>Choose a subject and day, then mark present/absent for all students.</p></div></div>
+            <div class="form-row two" style="margin-bottom:18px;">
+              <div class="field" style="margin-bottom:0;"><label>Subject (0–2)</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                <select id="mark-subject" onchange="renderMarkList()"><option value="0">Subject 1</option><option value="1">Subject 2</option><option value="2">Subject 3</option></select></div></div>
+              <div class="field" style="margin-bottom:0;"><label>Day (1–30)</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+                <select id="mark-day" onchange="renderMarkList()"></select></div></div>
+            </div>
+            <div class="mark-list" id="mark-list"></div>
+            <div class="form-actions">
+              <button class="btn btn-emerald" onclick="saveMarkAttendance()">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
+                Save Attendance for All Students
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel: View Attendance -->
+        <div class="panel" id="tea-panel-view">
+          <div class="card" style="max-width:460px;">
+            <div class="card-head"><div><h3>3. View Attendance</h3><p>Look up a student's full attendance grid by ID.</p></div></div>
+            <form onsubmit="return teacherViewAttendance(event)">
+              <div class="field"><label>Student ID</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><input type="number" required id="tv-id" placeholder="e.g. 101"></div></div>
+              <button class="btn btn-primary btn-block" type="submit">View</button>
+            </form>
+          </div>
+          <div id="tv-result"></div>
+        </div>
+
+        <!-- Panel: Update Attendance -->
+        <div class="panel" id="tea-panel-update">
+          <div class="card" style="max-width:520px;">
+            <div class="card-head"><div><h3>4. Update Attendance</h3><p>Change the value for a specific student, subject, and day.</p></div></div>
+            <form onsubmit="return teacherUpdateAttendance(event)">
+              <div class="form-row">
+                <div class="field" style="margin-bottom:0;"><label>Student ID</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><input type="number" required id="tu-id"></div></div>
+                <div class="field" style="margin-bottom:0;"><label>Subject (0–2)</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/></svg><input type="number" min="0" max="2" required id="tu-subject"></div></div>
+                <div class="field" style="margin-bottom:0;"><label>Day (1–30)</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/></svg><input type="number" min="1" max="30" required id="tu-day"></div></div>
+              </div>
+              <div class="field" style="margin-top:16px;"><label>New Value</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <select id="tu-value"><option value="1">1 — Present</option><option value="0">0 — Absent</option></select></div></div>
+              <button class="btn btn-primary btn-block" type="submit">Update</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Panel: Delete Attendance -->
+        <div class="panel" id="tea-panel-delete">
+          <div class="card" style="max-width:460px;">
+            <div class="card-head"><div><h3>5. Delete Attendance</h3><p>Resets a specific day's record for a student back to Absent (0).</p></div></div>
+            <form onsubmit="return teacherDeleteAttendance(event)">
+              <div class="form-row" style="grid-template-columns:1fr 1fr 1fr;">
+                <div class="field" style="margin-bottom:0;"><label>Student ID</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><input type="number" required id="td-id"></div></div>
+                <div class="field" style="margin-bottom:0;"><label>Subject</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/></svg><input type="number" min="0" max="2" required id="td-subject"></div></div>
+                <div class="field" style="margin-bottom:0;"><label>Day</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/></svg><input type="number" min="1" max="30" required id="td-day"></div></div>
+              </div>
+              <button class="btn btn-danger btn-block" style="margin-top:16px;" type="submit">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                Delete
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Panel: Search Student -->
+        <div class="panel" id="tea-panel-search">
+          <div class="card" style="max-width:460px;">
+            <div class="card-head"><div><h3>6. Search Student</h3><p>Find a student by their ID.</p></div></div>
+            <form onsubmit="return teacherSearchStudent(event)">
+              <div class="field"><label>Student ID</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg><input type="number" required id="ts-id"></div></div>
+              <button class="btn btn-primary btn-block" type="submit">Search</button>
+            </form>
+          </div>
+          <div id="ts-result"></div>
+        </div>
+
+        <!-- Panel: View Files -->
+        <div class="panel" id="tea-panel-files">
+          <div class="card-head" style="margin-bottom:14px;"><div><h3>7–9. View Files</h3><p>Read-only view of the raw records, mirroring the C program's file output.</p></div></div>
+          <div class="form-row" style="grid-template-columns:repeat(3,auto);margin-bottom:20px;">
+            <button class="btn btn-outline btn-sm" onclick="openFileViewer('students')">7. students.txt</button>
+            <button class="btn btn-outline btn-sm" onclick="openFileViewer('teachers')">8. teachers.txt</button>
+            <button class="btn btn-outline btn-sm" onclick="openFileViewer('attendance')">9. attendance.txt</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: EXAM DASHBOARD ===== -->
+  <div class="view" id="view-exam-dash">
+    <div class="dash">
+      <div class="sidebar">
+        <div class="sidebar-userbox">
+          <div class="avatar" id="exam-avatar">E</div>
+          <div><div class="u-name" id="exam-name-side">—</div><div class="u-role">Exam Dept.</div></div>
+        </div>
+        <div class="sidebar-label">Exam Panel</div>
+        <button class="side-link active" data-panel="exam-panel-eligibility" onclick="switchDashPanel(this,'exam-panel-eligibility')"><svg class="icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg><span>1. Check Eligibility</span></button>
+        <button class="side-link" data-panel="exam-panel-files" onclick="switchDashPanel(this,'exam-panel-files')"><svg class="icon" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg><span>2–5. View Files</span></button>
+        <div class="sidebar-spacer"></div>
+        <button class="side-link logout" onclick="logout('exam')"><svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span>6. Logout</span></button>
+      </div>
+      <div class="dash-main">
+        <div class="panel active" id="exam-panel-eligibility">
+          <div class="page-head"><h1>Check Eligibility</h1><p>Attendance must be at least 75% to be eligible for examinations.</p></div>
+          <div class="card" style="max-width:460px;">
+            <form onsubmit="return examCheckEligibility(event)">
+              <div class="field"><label>Student ID</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><input type="number" required id="ee-id" placeholder="Enter ID"></div></div>
+              <button class="btn btn-primary btn-block" type="submit">Check Eligibility</button>
+            </form>
+          </div>
+          <div id="ee-result" style="max-width:460px;"></div>
+        </div>
+        <div class="panel" id="exam-panel-files">
+          <div class="page-head"><h1>View Files</h1><p>Read-only view of the raw records.</p></div>
+          <div class="form-row" style="grid-template-columns:repeat(4,auto);">
+            <button class="btn btn-outline btn-sm" onclick="openFileViewer('students')">2. students.txt</button>
+            <button class="btn btn-outline btn-sm" onclick="openFileViewer('attendance')">3. attendance.txt</button>
+            <button class="btn btn-outline btn-sm" onclick="openFileViewer('teachers')">4. teachers.txt</button>
+            <button class="btn btn-outline btn-sm" onclick="openFileViewer('exam')">5. exam.txt</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ MODALS ============================================================ -->
+
+<!-- Student Signup -->
+<div class="modal-overlay" id="modal-student-signup">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Student Signup</h3><button class="modal-close" onclick="closeModal('modal-student-signup')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button></div>
+    <div class="modal-body">
+      <form onsubmit="return studentSignup(event)">
+        <div class="field"><label>Student ID</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><input type="number" required id="ss-id" placeholder="e.g. 101"></div></div>
+        <div class="field"><label>Name</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><input type="text" required id="ss-name" placeholder="Full name"></div></div>
+        <div class="field"><label>Password</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="text" required id="ss-pass" placeholder="Password"></div></div>
+        <button class="btn btn-primary btn-block" type="submit">Signup</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Student Login -->
+<div class="modal-overlay" id="modal-student-login">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Student Login</h3><button class="modal-close" onclick="closeModal('modal-student-login')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button></div>
+    <div class="modal-body">
+      <form onsubmit="return studentLogin(event)">
+        <div class="field"><label>Student ID</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><input type="number" required id="sl-id"></div></div>
+        <div class="field"><label>Password</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="password" required id="sl-pass"></div></div>
+        <button class="btn btn-emerald btn-block" type="submit">Login</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Teacher Signup -->
+<div class="modal-overlay" id="modal-teacher-signup">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Teacher Signup</h3><button class="modal-close" onclick="closeModal('modal-teacher-signup')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button></div>
+    <div class="modal-body">
+      <form onsubmit="return teacherSignup(event)">
+        <div class="field"><label>Username</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg><input type="text" required id="tsg-user" placeholder="e.g. Ali"></div></div>
+        <div class="field"><label>Password</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="text" required id="tsg-pass"></div></div>
+        <button class="btn btn-primary btn-block" type="submit">Signup</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Teacher Login -->
+<div class="modal-overlay" id="modal-teacher-login">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Teacher Login</h3><button class="modal-close" onclick="closeModal('modal-teacher-login')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button></div>
+    <div class="modal-body">
+      <form onsubmit="return teacherLogin(event)">
+        <div class="field"><label>Username</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg><input type="text" required id="tl-user"></div></div>
+        <div class="field"><label>Password</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="password" required id="tl-pass"></div></div>
+        <button class="btn btn-emerald btn-block" type="submit">Login</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Exam Signup -->
+<div class="modal-overlay" id="modal-exam-signup">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Exam Department Signup</h3><button class="modal-close" onclick="closeModal('modal-exam-signup')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button></div>
+    <div class="modal-body">
+      <form onsubmit="return examSignup(event)">
+        <div class="field"><label>Username</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg><input type="text" required id="esg-user" placeholder="e.g. Ahmad"></div></div>
+        <div class="field"><label>Password</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="text" required id="esg-pass"></div></div>
+        <button class="btn btn-primary btn-block" type="submit">Signup</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Exam Login -->
+<div class="modal-overlay" id="modal-exam-login">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Exam Department Login</h3><button class="modal-close" onclick="closeModal('modal-exam-login')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button></div>
+    <div class="modal-body">
+      <form onsubmit="return examLogin(event)">
+        <div class="field"><label>Username</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg><input type="text" required id="el-user"></div></div>
+        <div class="field"><label>Password</label><div class="input-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="password" required id="el-pass"></div></div>
+        <button class="btn btn-emerald btn-block" type="submit">Login</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- File Viewer -->
+<div class="modal-overlay" id="modal-file-viewer">
+  <div class="modal-box" style="max-width:620px;">
+    <div class="modal-head"><h3 id="fv-title">file.txt</h3><button class="modal-close" onclick="closeModal('modal-file-viewer')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button></div>
+    <div class="modal-body">
+      <div class="filebox-wrap">
+        <div class="filebox-head">
+          <span class="dot" style="background:#F87171"></span><span class="dot" style="background:#FBBF24"></span><span class="dot" style="background:#34D399"></span>
+        </div>
+        <div class="filebox" id="fv-content"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONSTANTS — mirrors #define MAX / DAYS / SUBJECTS in the C source
+   ============================================================ */
+const DAYS = 30;
+const SUBJECTS = 3;
+const ELIGIBILITY_THRESHOLD = 75;
+
+/* ============================================================
+   STATE — persisted via localStorage, structured like the
+   original struct Student / Teacher / ExamDept + attendance[][][]
+   ============================================================ */
+const DB_KEY = 'ams_v1';
+let db = null;
+
+function seedDB(){
+  return {
+    students: [
+      {id:101, name:'Haroon', password:'123'},
+      {id:102, name:'Musab', password:'321'},
+      {id:103, name:'Maaz', password:'456'},
+      {id:104, name:'Ahzam', password:'789'}
+    ],
+    teachers: [
+      {username:'Ali', password:'12345'},
+      {username:'Ibrahim', password:'54321'},
+      {username:'Hamza', password:'abcdef'}
+    ],
+    examAdmins: [
+      {username:'Ahmad', password:'123456789'},
+      {username:'Saad', password:'456789'}
+    ],
+    // attendance[studentId][subjectIndex][dayIndex 0..29] = 0/1
+    attendance: {
+      101:[zeroDay(19,1), zeroDay(10,1), zeroDay(29,1)],
+      102:[zeroDay(-1,0), zeroDay(10,1), zeroDay(29,1)],
+      103:[zeroDay(19,1), zeroDay(-1,0), zeroDay(29,1)],
+      104:[zeroDay(-1,0), zeroDay(-1,0), zeroDay(-1,0)]
+    }
+  };
+}
+function zeroDay(presentIdx, val){
+  const arr = new Array(DAYS).fill(0);
+  if(presentIdx>=0 && presentIdx<DAYS) arr[presentIdx]=val;
+  return arr;
+}
+
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  const seeded = seedDB();
+  saveDBTo(seeded);
+  return seeded;
+}
+function saveDB(){ saveDBTo(db); }
+function saveDBTo(obj){ localStorage.setItem(DB_KEY, JSON.stringify(obj)); }
+
+function ensureAttendance(id){
+  if(!db.attendance[id]){
+    db.attendance[id] = [new Array(DAYS).fill(0), new Array(DAYS).fill(0), new Array(DAYS).fill(0)];
+  }
+  return db.attendance[id];
+}
+
+/* Session state */
+let session = { role:null, studentIndex:null, username:null };
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+window.addEventListener('DOMContentLoaded', ()=>{
+  db = loadDB();
+  setTimeout(()=>{ document.getElementById('loader').classList.add('gone'); }, 700);
+  tickClock();
+  setInterval(tickClock, 1000);
+  populateDaySelect();
+});
+function tickClock(){
+  const el = document.getElementById('landing-clock');
+  if(!el) return;
+  const d = new Date();
+  el.textContent = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+function populateDaySelect(){
+  const sel = document.getElementById('mark-day');
+  if(!sel) return;
+  sel.innerHTML='';
+  for(let i=1;i<=DAYS;i++){
+    const o = document.createElement('option'); o.value=i; o.textContent='Day '+i; sel.appendChild(o);
+  }
+}
+function scrollToFeatures(){ document.getElementById('features').scrollIntoView({behavior:'smooth'}); }
+
+/* ============================================================
+   NAVIGATION: landing <-> app, view switching, breadcrumbs
+   ============================================================ */
+function goToMainMenu(){
+  document.getElementById('landing').classList.add('hidden-landing');
+  document.getElementById('app').classList.add('active');
+  showView('view-mainmenu');
+}
+function exitSystem(){
+  toast('info','Program Ended','Thanks for using the Attendance Management System.');
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('landing').classList.remove('hidden-landing');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+const crumbMap = {
+  'view-mainmenu':'Main Menu',
+  'view-student-menu':'Main Menu / Student',
+  'view-teacher-menu':'Main Menu / Teacher',
+  'view-exam-menu':'Main Menu / Exam Department',
+  'view-student-dash':'Main Menu / Student / Dashboard',
+  'view-teacher-dash':'Main Menu / Teacher / Dashboard',
+  'view-exam-dash':'Main Menu / Exam Department / Dashboard'
+};
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const c = crumbMap[id] || 'Main Menu';
+  const parts = c.split(' / ');
+  document.getElementById('crumbs').innerHTML = '/ ' + parts.map((p,i)=> i===parts.length-1 ? '<b>'+p+'</b>' : p).join(' / ');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function switchDashPanel(btn, panelId){
+  const sidebar = btn.closest('.sidebar');
+  sidebar.querySelectorAll('.side-link[data-panel]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const main = sidebar.nextElementSibling;
+  main.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(panelId).classList.add('active');
+  if(panelId==='tea-panel-mark') renderMarkList();
+}
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+document.addEventListener('click', (e)=>{
+  if(e.target.classList && e.target.classList.contains('modal-overlay')){
+    e.target.classList.remove('show');
+  }
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape'){ document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show')); }
+});
+
+/* ============================================================
+   TOASTS
+   ============================================================ */
+function toast(type, title, msg){
+  const stack = document.getElementById('toast-stack');
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type||'');
+  const iconPath = type==='error'
+    ? '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>'
+    : type==='info'
+    ? '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>'
+    : '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>';
+  el.innerHTML = `<svg class="icon toast-icon" viewBox="0 0 24 24">${iconPath}</svg>
+    <div><div class="toast-title">${title}</div><div class="toast-msg">${msg||''}</div></div>`;
+  stack.appendChild(el);
+  setTimeout(()=>{ el.style.transition='opacity .4s, transform .4s'; el.style.opacity='0'; el.style.transform='translateX(30px)'; setTimeout(()=>el.remove(),400); }, 3800);
+}
+
+/* ============================================================
+   STUDENT MODULE
+   ============================================================ */
+function studentSignup(e){
+  e.preventDefault();
+  const id = parseInt(document.getElementById('ss-id').value);
+  const name = document.getElementById('ss-name').value.trim();
+  const pass = document.getElementById('ss-pass').value;
+  if(db.students.find(s=>s.id===id)){
+    toast('error','ID Already Exists!','Student ID '+id+' is already registered.');
+    return false;
+  }
+  db.students.push({id,name,password:pass});
+  ensureAttendance(id);
+  saveDB();
+  toast('success','Signup Successful','Student "'+name+'" (ID '+id+') was created.');
+  closeModal('modal-student-signup');
+  e.target.reset();
+  return false;
+}
+function studentLogin(e){
+  e.preventDefault();
+  const id = parseInt(document.getElementById('sl-id').value);
+  const pass = document.getElementById('sl-pass').value;
+  const idx = db.students.findIndex(s=>s.id===id && s.password===pass);
+  if(idx===-1){
+    toast('error','Wrong Login','No matching Student ID and password found.');
+    return false;
+  }
+  session = {role:'student', studentIndex:idx};
+  closeModal('modal-student-login');
+  toast('success','Login Successful','Welcome back, '+db.students[idx].name+'.');
+  enterStudentDash(idx);
+  e.target.reset();
+  return false;
+}
+function enterStudentDash(idx){
+  const stu = db.students[idx];
+  document.getElementById('stu-name-side').textContent = stu.name;
+  document.getElementById('stu-avatar').textContent = stu.name.charAt(0).toUpperCase();
+  renderTopbarSession('Student', stu.name);
+  renderStudentStats(stu);
+  renderStudentGrid(stu);
+  renderStudentPercent(stu);
+  showView('view-student-dash');
+}
+function renderStudentStats(stu){
+  const att = ensureAttendance(stu.id);
+  const grid = document.getElementById('stu-stat-grid');
+  const colors = ['#2563EB','#10B981','#F59E0B'];
+  let html='';
+  for(let s=0;s<SUBJECTS;s++){
+    const present = att[s].reduce((a,b)=>a+b,0);
+    html += `<div class="stat-card">
+      <div class="sc-top">
+        <div class="sc-ic" style="background:${colors[s]}1A;"><svg class="icon" viewBox="0 0 24 24" style="stroke:${colors[s]}"><path d="M2 3h20v14H2z"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></div>
+        <span class="sc-trend" style="background:${colors[s]}1A;color:${colors[s]}">Subject ${s+1}</span>
+      </div>
+      <div class="val">${present}<span style="font-size:15px;color:var(--muted);">/${DAYS}</span></div>
+      <div class="lbl">Days present</div>
+    </div>`;
+  }
+  const totalPresent = att.reduce((sum,row)=>sum+row.reduce((a,b)=>a+b,0),0);
+  const pct = ((totalPresent/(SUBJECTS*DAYS))*100).toFixed(1);
+  html += `<div class="stat-card">
+    <div class="sc-top">
+      <div class="sc-ic" style="background:#0F172A1A;"><svg class="icon" viewBox="0 0 24 24" style="stroke:#0F172A"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg></div>
+      <span class="sc-trend" style="background:${pct>=75?'#ECFDF5':'#FEF2F2'};color:${pct>=75?'#10B981':'#EF4444'}">${pct>=75?'Eligible':'At Risk'}</span>
+    </div>
+    <div class="val">${pct}%</div>
+    <div class="lbl">Overall attendance</div>
+  </div>`;
+  grid.innerHTML = html;
+}
+function renderStudentGrid(stu){
+  const att = ensureAttendance(stu.id);
+  const wrap = document.getElementById('stu-attgrid');
+  const colors = ['#2563EB','#10B981','#F59E0B'];
+  let html='';
+  for(let s=0;s<SUBJECTS;s++){
+    html += `<div class="attgrid-subject"><h4><span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:${colors[s]}"></span> Subject ${s+1}</h4><div class="daydots">`;
+    for(let d=0;d<DAYS;d++){
+      const p = att[s][d]===1;
+      html += `<div class="daydot ${p?'present':'absent'}" data-tip="Day ${d+1}: ${p?'Present':'Absent'}">${d+1}</div>`;
+    }
+    html += `</div></div>`;
+  }
+  wrap.innerHTML = html;
+}
+function renderStudentPercent(stu){
+  const pct = calcAttendance(stu.id);
+  document.getElementById('stu-pct-title').textContent = pct.toFixed(2)+'%';
+  const bar = document.getElementById('stu-pct-bar');
+  bar.className = 'pbar-fill ' + (pct>=75?'good':'bad');
+  setTimeout(()=>{ bar.style.width = Math.min(pct,100)+'%'; }, 60);
+  const att = ensureAttendance(stu.id);
+  const present = att.reduce((sum,row)=>sum+row.reduce((a,b)=>a+b,0),0);
+  document.getElementById('stu-pct-detail').textContent = `${present} present out of ${SUBJECTS*DAYS} total sessions across ${SUBJECTS} subjects.`;
+}
+function calcAttendance(id){
+  const att = ensureAttendance(id);
+  const present = att.reduce((sum,row)=>sum+row.reduce((a,b)=>a+b,0),0);
+  return (present/(SUBJECTS*DAYS))*100;
+}
+
+/* ============================================================
+   TEACHER MODULE
+   ============================================================ */
+function teacherSignup(e){
+  e.preventDefault();
+  const username = document.getElementById('tsg-user').value.trim();
+  const pass = document.getElementById('tsg-pass').value;
+  db.teachers.push({username,password:pass});
+  saveDB();
+  toast('success','Teacher Signup Successful','Account "'+username+'" created.');
+  closeModal('modal-teacher-signup');
+  e.target.reset();
+  return false;
+}
+function teacherLogin(e){
+  e.preventDefault();
+  const user = document.getElementById('tl-user').value.trim();
+  const pass = document.getElementById('tl-pass').value;
+  const found = db.teachers.find(t=>t.username===user && t.password===pass);
+  if(!found){
+    toast('error','Wrong Login','No matching teacher username and password found.');
+    return false;
+  }
+  session = {role:'teacher', username:user};
+  closeModal('modal-teacher-login');
+  toast('success','Login Successful','Welcome back, '+user+'.');
+  enterTeacherDash(user);
+  e.target.reset();
+  return false;
+}
+function enterTeacherDash(username){
+  document.getElementById('tea-name-side').textContent = username;
+  document.getElementById('tea-avatar').textContent = username.charAt(0).toUpperCase();
+  renderTopbarSession('Teacher', username);
+  renderTeacherStats();
+  renderMarkList();
+  document.getElementById('tv-result').innerHTML='';
+  document.getElementById('ts-result').innerHTML='';
+  showView('view-teacher-dash');
+}
+function renderTeacherStats(){
+  const grid = document.getElementById('tea-stat-grid');
+  const totalStudents = db.students.length;
+  const avgPct = db.students.length ? (db.students.reduce((s,st)=>s+calcAttendance(st.id),0)/db.students.length) : 0;
+  const eligible = db.students.filter(st=>calcAttendance(st.id)>=ELIGIBILITY_THRESHOLD).length;
+  grid.innerHTML = `
+    <div class="stat-card">
+      <div class="sc-top"><div class="sc-ic" style="background:#EFF6FF;"><svg class="icon" viewBox="0 0 24 24" style="stroke:#2563EB"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div></div>
+      <div class="val">${totalStudents}</div><div class="lbl">Registered students</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-top"><div class="sc-ic" style="background:#ECFDF5;"><svg class="icon" viewBox="0 0 24 24" style="stroke:#10B981"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div></div>
+      <div class="val">${avgPct.toFixed(1)}%</div><div class="lbl">Average attendance</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-top"><div class="sc-ic" style="background:#EEF2FF;"><svg class="icon" viewBox="0 0 24 24" style="stroke:#4338CA"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg></div></div>
+      <div class="val">${eligible}</div><div class="lbl">Exam-eligible students</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-top"><div class="sc-ic" style="background:#FFF7ED;"><svg class="icon" viewBox="0 0 24 24" style="stroke:#F59E0B"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+      <div class="val">${DAYS}</div><div class="lbl">Active cycle days</div>
+    </div>`;
+}
+function teacherAddStudent(e){
+  e.preventDefault();
+  const id = parseInt(document.getElementById('ta-id').value);
+  const name = document.getElementById('ta-name').value.trim();
+  const pass = document.getElementById('ta-pass').value;
+  if(db.students.find(s=>s.id===id)){
+    toast('error','ID Already Exists!','Student ID '+id+' is already registered.');
+    return false;
+  }
+  db.students.push({id,name,password:pass});
+  ensureAttendance(id);
+  saveDB();
+  toast('success','Signup Successful','Student "'+name+'" (ID '+id+') added.');
+  renderTeacherStats();
+  renderMarkList();
+  e.target.reset();
+  return false;
+}
+function renderMarkList(){
+  const list = document.getElementById('mark-list');
+  if(!list) return;
+  const subject = parseInt(document.getElementById('mark-subject').value);
+  const day = parseInt(document.getElementById('mark-day').value);
+  if(db.students.length===0){
+    list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><h4>No students yet</h4><p>Add a student first to mark attendance.</p></div>`;
+    return;
+  }
+  let html='';
+  db.students.forEach(stu=>{
+    const att = ensureAttendance(stu.id);
+    const val = att[subject][day-1];
+    html += `<div class="mark-row" data-id="${stu.id}">
+      <div class="mr-info"><div class="mr-av">${stu.name.charAt(0).toUpperCase()}</div>
+        <div><div class="mr-name">${stu.name}</div><div class="mr-id">ID ${stu.id}</div></div></div>
+      <div class="toggle-group">
+        <button type="button" class="toggle-opt on-present ${val===1?'active':''}" onclick="setMarkValue(${stu.id},this,1)">Present</button>
+        <button type="button" class="toggle-opt on-absent ${val===0?'active':''}" onclick="setMarkValue(${stu.id},this,0)">Absent</button>
+      </div>
+    </div>`;
+  });
+  list.innerHTML = html;
+}
+let pendingMarks = {};
+function setMarkValue(studentId, btn, val){
+  pendingMarks[studentId] = val;
+  const row = btn.closest('.mark-row');
+  row.querySelectorAll('.toggle-opt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function saveMarkAttendance(){
+  const subject = parseInt(document.getElementById('mark-subject').value);
+  const day = parseInt(document.getElementById('mark-day').value);
+  if(db.students.length===0){ toast('error','No Students','Add students before marking attendance.'); return; }
+  db.students.forEach(stu=>{
+    const att = ensureAttendance(stu.id);
+    const val = (pendingMarks[stu.id] !== undefined) ? pendingMarks[stu.id] : att[subject][day-1];
+    att[subject][day-1] = (val===1) ? 1 : 0;
+  });
+  pendingMarks = {};
+  saveDB();
+  renderTeacherStats();
+  toast('success','Attendance Marking Completed','Saved for ALL students — Subject '+(subject+1)+', Day '+day+'.');
+}
+function teacherViewAttendance(e){
+  e.preventDefault();
+  const id = parseInt(document.getElementById('tv-id').value);
+  const stu = db.students.find(s=>s.id===id);
+  const box = document.getElementById('tv-result');
+  if(!stu){
+    box.innerHTML = alertBox('error','Student Not Found','No student exists with ID '+id+'.');
+    return false;
+  }
+  const att = ensureAttendance(stu.id);
+  const colors = ['#2563EB','#10B981','#F59E0B'];
+  let grid='';
+  for(let s=0;s<SUBJECTS;s++){
+    grid += `<div class="attgrid-subject"><h4><span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:${colors[s]}"></span> Subject ${s+1}</h4><div class="daydots">`;
+    for(let d=0;d<DAYS;d++){
+      const p = att[s][d]===1;
+      grid += `<div class="daydot ${p?'present':'absent'}" data-tip="Day ${d+1}: ${p?'Present':'Absent'}">${d+1}</div>`;
+    }
+    grid += `</div></div>`;
+  }
+  box.innerHTML = `<div class="card"><div class="card-head"><div><h3>Name: ${stu.name}</h3><p>Student ID ${stu.id} — attendance grid below</p></div>
+    <span class="badge badge-eligible">${calcAttendance(stu.id).toFixed(1)}%</span></div><div class="attgrid">${grid}</div></div>`;
+  return false;
+}
+function teacherUpdateAttendance(e){
+  e.preventDefault();
+  const id = parseInt(document.getElementById('tu-id').value);
+  const subject = parseInt(document.getElementById('tu-subject').value);
+  const day = parseInt(document.getElementById('tu-day').value);
+  const val = parseInt(document.getElementById('tu-value').value);
+  const stu = db.students.find(s=>s.id===id);
+  if(!stu){ toast('error','Student Not Found','No student exists with ID '+id+'.'); return false; }
+  if(subject<0||subject>=SUBJECTS){ toast('error','Invalid Subject','Subject must be between 0 and 2.'); return false; }
+  if(day<1||day>DAYS){ toast('error','Invalid Day','Day must be between 1 and 30.'); return false; }
+  const att = ensureAttendance(id);
+  att[subject][day-1] = val;
+  saveDB();
+  renderTeacherStats();
+  toast('success','Updated Successfully','Student '+id+' — Subject '+(subject+1)+', Day '+day+' set to '+(val===1?'Present':'Absent')+'.');
+  e.target.reset();
+  return false;
+}
+function teacherDeleteAttendance(e){
+  e.preventDefault();
+  const id = parseInt(document.getElementById('td-id').value);
+  const subject = parseInt(document.getElementById('td-subject').value);
+  const day = parseInt(document.getElementById('td-day').value);
+  const stu = db.students.find(s=>s.id===id);
+  if(!stu){ toast('error','Student Not Found','No student exists with ID '+id+'.'); return false; }
+  if(subject<0||subject>=SUBJECTS || day<1||day>DAYS){ toast('error','Invalid Input','Check subject (0-2) and day (1-30).'); return false; }
+  const att = ensureAttendance(id);
+  att[subject][day-1] = 0;
+  saveDB();
+  renderTeacherStats();
+  toast('success','Deleted','Record reset to Absent (0).');
+  e.target.reset();
+  return false;
+}
+function teacherSearchStudent(e){
+  e.preventDefault();
+  const id = parseInt(document.getElementById('ts-id').value);
+  const stu = db.students.find(s=>s.id===id);
+  const box = document.getElementById('ts-result');
+  if(!stu){
+    box.innerHTML = alertBox('error','Student Not Found','No student exists with ID '+id+'.');
+    return false;
+  }
+  box.innerHTML = `<div class="card" style="max-width:460px;">
+    <div class="card-head"><div><h3>Student Found</h3></div></div>
+    <div class="table-wrap"><table><tbody>
+      <tr><td style="font-weight:700;width:120px;">ID</td><td class="mono">${stu.id}</td></tr>
+      <tr><td style="font-weight:700;">Name</td><td>${stu.name}</td></tr>
+      <tr><td style="font-weight:700;">Attendance</td><td>${calcAttendance(stu.id).toFixed(2)}%</td></tr>
+    </tbody></table></div></div>`;
+  return false;
+}
+
+/* ============================================================
+   EXAM DEPARTMENT MODULE
+   ============================================================ */
+function examSignup(e){
+  e.preventDefault();
+  const username = document.getElementById('esg-user').value.trim();
+  const pass = document.getElementById('esg-pass').value;
+  db.examAdmins.push({username,password:pass});
+  saveDB();
+  toast('success','Exam Department Signup Successful','Account "'+username+'" created.');
+  closeModal('modal-exam-signup');
+  e.target.reset();
+  return false;
+}
+function examLogin(e){
+  e.preventDefault();
+  const user = document.getElementById('el-user').value.trim();
+  const pass = document.getElementById('el-pass').value;
+  const found = db.examAdmins.find(a=>a.username===user && a.password===pass);
+  if(!found){
+    toast('error','Wrong Login','No matching exam department username and password found.');
+    return false;
+  }
+  session = {role:'exam', username:user};
+  closeModal('modal-exam-login');
+  toast('success','Login Successful','Welcome back, '+user+'.');
+  renderTopbarSession('Exam Dept.', user);
+  document.getElementById('exam-name-side').textContent = user;
+  document.getElementById('exam-avatar').textContent = user.charAt(0).toUpperCase();
+  document.getElementById('ee-result').innerHTML='';
+  showView('view-exam-dash');
+  e.target.reset();
+  return false;
+}
+function examCheckEligibility(e){
+  e.preventDefault();
+  const id = parseInt(document.getElementById('ee-id').value);
+  const stu = db.students.find(s=>s.id===id);
+  const box = document.getElementById('ee-result');
+  if(!stu){
+    box.innerHTML = alertBox('error','Student Not Found','No student exists with ID '+id+'.');
+    return false;
+  }
+  const pct = calcAttendance(stu.id);
+  const eligible = pct >= ELIGIBILITY_THRESHOLD;
+  box.innerHTML = `<div class="result-banner ${eligible?'ok':'no'}">
+    <div class="rb-ic">${eligible
+      ? '<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>'
+      : '<svg viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>'}</div>
+    <div><h4>${stu.name} — Attendance: ${pct.toFixed(2)}%</h4>
+    <p>${eligible ? 'Eligible for Exam (≥ 75% required).' : 'Not Eligible — attendance is below the 75% threshold.'}</p></div>
+  </div>`;
+  return false;
+}
+
+/* ============================================================
+   FILE VIEWERS (mirrors students.txt / teachers.txt / etc.)
+   ============================================================ */
+function openFileViewer(type){
+  const titleEl = document.getElementById('fv-title');
+  const contentEl = document.getElementById('fv-content');
+  let lines = [];
+  if(type==='students'){
+    titleEl.textContent = 'students.txt';
+    lines = db.students.map(s=>`${s.id} ${s.name} ${s.password}`);
+  } else if(type==='teachers'){
+    titleEl.textContent = 'teachers.txt';
+    lines = db.teachers.map(t=>`${t.username} ${t.password}`);
+  } else if(type==='exam'){
+    titleEl.textContent = 'exam.txt';
+    lines = db.examAdmins.map(a=>`${a.username} ${a.password}`);
+  } else if(type==='attendance'){
+    titleEl.textContent = 'attendance.txt';
+    lines = [];
+    db.students.forEach(stu=>{
+      const att = ensureAttendance(stu.id);
+      lines.push(`Student ID: ${stu.id}`);
+      lines.push(`Name: ${stu.name}`);
+      for(let s=0;s<SUBJECTS;s++){
+        lines.push(`Subject ${s+1}: ${att[s].join(' ')}`);
+      }
+      lines.push('------------------------');
+    });
+  }
+  if(lines.length===0) lines = ['(file is empty)'];
+  contentEl.innerHTML = lines.map((l,i)=>`<span class="ln">${String(i+1).padStart(2,'0')}</span>${escapeHtml(l)}`).join('\n');
+  openModal('modal-file-viewer');
+}
+function escapeHtml(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ============================================================
+   SHARED HELPERS
+   ============================================================ */
+function alertBox(type, title, msg){
+  const isErr = type==='error';
+  return `<div class="result-banner ${isErr?'no':'ok'}" style="margin-top:18px;">
+    <div class="rb-ic">${isErr
+      ? '<svg viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>'
+      : '<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>'}</div>
+    <div><h4>${title}</h4><p>${msg}</p></div>
+  </div>`;
+}
+function renderTopbarSession(role, name){
+  const el = document.getElementById('topbar-session');
+  el.innerHTML = `<span class="pill-role"><span class="avatar">${name.charAt(0).toUpperCase()}</span>${name} · ${role}</span>`;
+}
+function logout(role){
+  session = {role:null, studentIndex:null, username:null};
+  document.getElementById('topbar-session').innerHTML='';
+  toast('info','Logged Out','You have been logged out safely.');
+  if(role==='student') showView('view-student-menu');
+  else if(role==='teacher') showView('view-teacher-menu');
+  else showView('view-exam-menu');
+}
+</script>
+</body>
+</html>
